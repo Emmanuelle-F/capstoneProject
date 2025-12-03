@@ -5,35 +5,20 @@ import os
 
 
 def clean_extracted_text(raw_text: str) -> str:
-    """
-    Clean extracted resume text by removing unnecessary whitespaces
-    and normalizing formatting for better downstream processing.
 
-    Args:
-        raw_text (str): The raw extracted text.
+    # Clean extracted resume text by removing unnecessary whitespaces
 
-    Returns:
-        str: A cleaned, readable version of the text.
-    """
     if not raw_text:
         return ""
 
-    # Replace multiple spaces or newlines with a single space
     cleaned_text = re.sub(r"\s+", " ", raw_text)
 
     return cleaned_text.strip()
 
 
 def extract_text_from_pdf(file_path: str) -> str:
-    """
-    Extract text content from a PDF resume.
-
-    Args:
-        file_path (str): Path to the PDF file.
-
-    Returns:
-        str: Extracted and cleaned text.
-    """
+    
+    # Extract text content from a PDF resume.
     extracted_text = ""
 
     try:
@@ -51,15 +36,9 @@ def extract_text_from_pdf(file_path: str) -> str:
 
 
 def extract_text_from_docx(file_path: str) -> str:
-    """
-    Extract text content from a DOCX resume.
+    
+    # Extract text content from a DOCX resume.
 
-    Args:
-        file_path (str): Path to the DOCX file.
-
-    Returns:
-        str: Extracted and cleaned text.
-    """
     extracted_text = ""
 
     try:
@@ -75,15 +54,9 @@ def extract_text_from_docx(file_path: str) -> str:
 
 
 def extract_resume_text(file_path: str) -> str:
-    """
-    Detect file type (PDF or DOCX) and extract text accordingly.
+    
+    # Detect file type (PDF or DOCX) and extract text accordingly.
 
-    Args:
-        file_path (str): Path to the resume file.
-
-    Returns:
-        str: Extracted text.
-    """
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"[ERROR] File does not exist: {file_path}")
 

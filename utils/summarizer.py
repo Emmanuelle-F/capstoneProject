@@ -4,20 +4,13 @@ from typing import Dict
 from dotenv import load_dotenv
 from llama_index.llms.groq import Groq
 
-# Load environment variables from .env
 load_dotenv()
 
-
 class ResumeSummarizer:
-    """
-    Uses a Groq-hosted LLM to generate readable summaries
-    for each candidate based on their resume and the job description.
-    """
 
     def __init__(self) -> None:
-        """
-        Initialize the Groq LLM client using settings from environment variables.
-        """
+        
+        # Initialize the Groq LLM
         api_key = os.getenv("GROQ_API_KEY")
         model_name = os.getenv("GROQ_MODEL_NAME", "llama-3.3-70b-versatile")
 
@@ -37,16 +30,9 @@ class ResumeSummarizer:
             raise RuntimeError(f"[ERROR] Failed to initialize Groq LLM: {error}")
 
     def summarize_candidate(self, resume_text: str, job_description: str) -> str:
-        """
-        Generate a concise, recruiter-friendly summary for a candidate.
+        
+        # Generate a concise summary for a candidate.
 
-        Args:
-            resume_text (str): Full text extracted from the candidate's resume.
-            job_description (str): The target job description text.
-
-        Returns:
-            str: A short markdown-style summary describing fit, strengths, and gaps.
-        """
         if not resume_text or len(resume_text.strip()) == 0:
             return "[WARNING] Empty resume text. Cannot generate summary."
 
@@ -86,16 +72,8 @@ class ResumeSummarizer:
         
 
     def analyze_strengths_and_gaps(self, resume_text: str, job_description: str) -> dict:
-        """
-        Analyse a candidate's strengths and gaps relative to the job description.
+        # Analyse a candidate's strengths and gaps relative to the job description.
 
-        Returns a dict with:
-            {
-                "strengths": str,
-                "gaps": str
-            }
-        Both fields are short bullet lists in plain text.
-        """
         if not resume_text or not resume_text.strip():
             return {
                 "strengths": "[WARNING] Empty resume text. Cannot analyse strengths.",
@@ -149,7 +127,6 @@ class ResumeSummarizer:
             response = self.llm.complete(prompt)
             full_text = response.text.strip()
 
-            # Simple split based on "Gaps:" label
             strengths_part = ""
             gaps_part = ""
 
@@ -175,12 +152,8 @@ class ResumeSummarizer:
         
 
     def analyze_red_flags(self, resume_text: str, job_description: str) -> str:
-        """
-        Identify potential risk factors or points to clarify for this candidate.
-
-        Returns:
-            str: A short list of bullet points, or a message saying no obvious red flags.
-        """
+        
+        # Identify potential risk factors
         if not resume_text or not resume_text.strip():
             return "[WARNING] Empty resume text. Cannot analyse red flags."
 
@@ -195,15 +168,15 @@ class ResumeSummarizer:
 
         Focus ONLY on the following points:
         - Very frequent job changes ONLY when they occur
-        within a short period (e.g. many roles of LESS THAN 1 year each in the LAST 5 years).
+        within a short period (e.g. MORE than 3 jobs of LESS THAN 1 year EACH in the LAST 5 years).
         - Do NOT consider it a red flag if the candidate has a long career
         (e.g. 10–15 years) with only a few roles and normal progression
         (e.g. 2–4 jobs over that period).
         - Limited industry experience applies ONLY if the candidate has LESS THAN 2 years of working experience in total
-        - Long unexplained employment gaps.
+        - No matching skills
 
-        If there are no major concerns, say clearly:
-        "No obvious red flags; profile appears generally consistent."
+        If there are no red flags, response ONLY:
+        "No red flags"
 
         - Output 3 bullet points and be concise.
         - Each bullet should be 1 line, direct and to the point.

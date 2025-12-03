@@ -17,9 +17,7 @@ from utils.ranking import ResumeRanker
 from utils.summarizer import ResumeSummarizer
 
 
-# -----------------------------
-# Temp file save
-# -----------------------------
+# Temporary file save
 def save_uploaded_file_to_temp(uploaded_file) -> str:
     suffix = os.path.splitext(uploaded_file.name)[1]
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
@@ -27,9 +25,6 @@ def save_uploaded_file_to_temp(uploaded_file) -> str:
         return temp_file.name
 
 
-# -----------------------------
-# Helpers
-# -----------------------------
 def _extract_candidate_name(resume_text: str) -> str:
     if not resume_text:
         return ""
@@ -51,7 +46,6 @@ def normalize_bullets(text: str, max_items: int = 3) -> str:
     if not s:
         return ""
 
-    # If bullets exist but are inline, split them
     if "•" in s and "\n" not in s:
         parts = [p.strip() for p in s.split("•") if p.strip()]
     else:
@@ -61,9 +55,9 @@ def normalize_bullets(text: str, max_items: int = 3) -> str:
 
     cleaned = []
     for p in parts:
-        # Remove leading bullet markers or numbering
+ 
         p = re.sub(r"^(\s*[-•*]\s+|\s*\d+[\).\]]\s+)", "", p).strip()
-        # Remove headings like "Strengths:", "Gaps:", etc.
+
         p = re.sub(
             r"^(summary|strengths|gaps|red\s*flags|flags)\s*[:\-–]\s*",
             "",
@@ -78,7 +72,7 @@ def normalize_bullets(text: str, max_items: int = 3) -> str:
 
 
 def render_multiline_table(df: pd.DataFrame) -> None:
-    """HTML table that respects newlines (<br>) + centered headers."""
+
     df2 = df.copy()
     for col in df2.columns:
         df2[col] = df2[col].astype(str).apply(lambda x: html.escape(x).replace("\n", "<br>"))
@@ -221,7 +215,7 @@ def process_and_index_resumes(
 
 def run_screening(job_description: str, uploaded_files: List[Any]) -> None:
     index_name = "resume-index"
-    top_k = 5
+    top_k = 8
 
     with st.spinner("Getting the AI Assistant ready for this screening..."):
         embedder = EmbeddingGenerator()
@@ -325,26 +319,23 @@ def run_screening(job_description: str, uploaded_files: List[Any]) -> None:
 
 
 def make_excel_bytes(results_for_export: pd.DataFrame) -> bytes:
-    """
-    Create an .xlsx in memory using openpyxl engine.
-    If openpyxl isn't installed, raise a friendly error.
-    """
-    try:
-        import openpyxl  # noqa: F401
-    except Exception as e:
-        raise RuntimeError("Excel export requires 'openpyxl'. Install it with: pip install openpyxl") from e
+
+    # try:
+    #     import openpyxl
+    # except Exception as e:
+    #     raise RuntimeError("Excel export requires 'openpyxl'. Install it with: pip install openpyxl") from e
 
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         results_for_export.to_excel(writer, index=False, sheet_name="Screening Results")
         worksheet = writer.sheets["Screening Results"]
-        worksheet.freeze_panes = "A2"  # freeze header row
+        worksheet.freeze_panes = "A2"
     output.seek(0)
     return output.getvalue()
 
 
 def render_dashboard_charts(results_df: pd.DataFrame, top_n: int = 5) -> None:
-    """Show only a compact Top candidates bar chart in the center of the page."""
+    
     if results_df is None or results_df.empty or "Match Score (%)" not in results_df.columns:
         st.info("No results available to display charts.")
         return
@@ -363,17 +354,16 @@ def render_dashboard_charts(results_df: pd.DataFrame, top_n: int = 5) -> None:
         st.info("No data available for top candidates chart.")
         return
 
-    # Create 3 columns and use only the middle one to keep the chart narrow
     col_left, col_center, col_right = st.columns([1, 2, 1])
 
     with col_center:
-        # Smaller figure size so it does not feel huge
-        fig, ax = plt.subplots(figsize=(6, 3))  # width, height in inches
+
+        fig, ax = plt.subplots(figsize=(6, 3)) 
 
         ax.barh(top["CV Name"], top["score_num"])
         ax.invert_yaxis()
 
-        for i, (score, cv_name) in enumerate(zip(top["score_num"], top["CV Name"])):  # noqa: B007
+        for i, (score, cv_name) in enumerate(zip(top["score_num"], top["CV Name"])): 
             ax.text(
                 score + 1,
                 i,
@@ -394,11 +384,11 @@ def render_dashboard_charts(results_df: pd.DataFrame, top_n: int = 5) -> None:
 
 
 def main():
-    # Use a very safe icon for the browser tab, keep robot in title
-    st.set_page_config(page_title="AI Resume Assistant", page_icon="🤖", layout="wide")
+    
+    st.set_page_config(page_title="AI Screening Assistant", page_icon="🤖", layout="wide")
     init_state()
 
-    st.title("🧠 AI Resume Assistant")
+    st.title("🧠 AI Screening Assistant")
     st.caption("The AI Assistant that helps you spot the right talent faster")
     st.markdown("---")
 
@@ -409,8 +399,7 @@ def main():
         job_description = st.text_area(
             "Input the job description here:",
             height=220,
-            key="jd_input",
-            placeholder="Example: We are looking for a Software Engineer with strong skills in Python, REST APIs...",
+            key="jd_input"
         )
 
     with col_right:
@@ -442,13 +431,12 @@ def main():
         st.markdown("### 📊 Results")
         render_multiline_table(st.session_state["compact_df"])
 
-        # ✅ Dashboard charts (Histogram + Top candidates)
+        # Dashboard charts
         render_dashboard_charts(st.session_state["results_df"], top_n=5)
 
-        # Notes (inline)
+        # Notes
         render_notes_grid(st.session_state["compact_df"])
 
-        # Build export dataframe WITHOUT Candidate Name (remove Excel column C)
         notes_map = st.session_state.get("notes_by_cv", {})
         results_for_export = st.session_state["results_df"].copy()
 
